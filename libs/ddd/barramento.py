@@ -1,11 +1,17 @@
+"""Barramento de mensagens para arquitetura DDD.
+
+Este módulo implementa o padrão Message Bus para processamento de
+comandos e eventos, seguindo os princípios do Domain-Driven Design.
+
+O barramento é desacoplado de implementações específicas de filas
+assíncronas (Celery, RabbitMQ, etc.) através de protocolos abstratos.
+"""
+
 import logging
+import os
 from abc import ABC
 from dataclasses import dataclass, asdict
-from typing import Any, NewType, Callable
-
-import sentry_sdk
-
-from libs.ddd.unidade_de_trabalho import UnidadeDeTrabalhoAbstrata
+from typing import Any, NewType, Callable, Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
 
@@ -64,21 +70,83 @@ ManipuladoresDeComandos = NewType(
 )
 
 
+@runtime_checkable
+class UnidadeDeTrabalhoProtocol(Protocol):
+    """Protocolo para Unidade de Trabalho.
+
+    Define a interface mínima necessária para o barramento funcionar,
+    permitindo desacoplamento da implementação concreta.
+    """
+
+    usuario: Any
+
+    def collect_new_events(self) -> Any:
+        """Coleta novos eventos gerados pelos agregados."""
+        ...
+
+
+@runtime_checkable
+class DespachadorAssincrono(Protocol):
+    """Protocolo para despachadores de eventos assíncronos.
+
+    Implementações podem usar Celery, RabbitMQ, SQS, etc.
+    Isso permite trocar a implementação sem alterar o barramento.
+    """
+
+    def despachar(self, evento: Evento, usuario: Any) -> None:
+        """Despacha um evento para processamento assíncrono."""
+        ...
+
+
+@runtime_checkable
+class ReportadorDeErros(Protocol):
+    """Protocolo para reportadores de erros.
+
+    Implementações podem usar Sentry, Datadog, etc.
+    """
+
+    def capturar_excecao(self, erro: Exception) -> None:
+        """Captura e reporta uma exceção."""
+        ...
+
+
 class BarramentoDeMensagens:
+    """Barramento de mensagens para comandos e eventos.
+
+    Processa comandos e eventos de forma síncrona, com suporte
+    opcional para despacho assíncrono de eventos.
+
+    Attributes:
+        uow: Unidade de trabalho para gerenciar transações.
+        event_handlers: Mapeamento de tipos de evento para handlers.
+        command_handlers: Mapeamento de tipos de comando para handlers.
+        subir_erros_de_eventos: Se True, levanta exceções em handlers de eventos.
+        despachador_assincrono: Implementação do despachador assíncrono.
+        reportador_de_erros: Implementação do reportador de erros.
+    """
+
     def __init__(
         self,
-        uow: UnidadeDeTrabalhoAbstrata,
+        uow: UnidadeDeTrabalhoProtocol,
         event_handlers: dict[type[Evento], list[Callable]],
         command_handlers: dict[type[Comando], Callable],
         subir_erros_de_eventos: bool = True,
-        permitir_execucoes_assincronas: bool = False,
+        despachador_assincrono: DespachadorAssincrono | None = None,
+        reportador_de_erros: ReportadorDeErros | None = None,
     ):
         self.uow = uow
         self.event_handlers = event_handlers
         self.command_handlers = command_handlers
         self.subir_erros_de_eventos = subir_erros_de_eventos
-        self.permitir_execucoes_assincronas = permitir_execucoes_assincronas
+        self.despachador_assincrono = despachador_assincrono
+        self.reportador_de_erros = reportador_de_erros
         self.queue: list[Mensagem] = []
+
+        self._ambiente_teste = os.getenv("TEST_ENV", "false") == "true"
+        self._ambiente_producao = os.getenv("ENV_CONFIG", "development") in [
+            "alpha",
+            "production",
+        ]
 
     async def handle(self, message: Mensagem) -> Any | None:
         self.queue = [message]
@@ -97,11 +165,8 @@ class BarramentoDeMensagens:
         return command_result
 
     async def handle_event(self, event: Evento) -> None:
-        if (
-            self.permitir_execucoes_assincronas
-            and isinstance(event, Evento)
-            and event.executar_de_forma_assincrona
-        ):
+        """Processa um evento, chamando todos os handlers registrados."""
+        if self._deve_despachar_async(event):
             await self.handle_async_event(event)
             return
 
@@ -113,45 +178,36 @@ class BarramentoDeMensagens:
                 self.queue.extend(self.uow.collect_new_events())
             except Exception as erro:
                 logger.exception(f"Exception handling event {event}")
+                self._tratar_erro_evento(erro)
 
-                import os
-                from dotenv import load_dotenv
+    def _deve_despachar_async(self, event: Evento) -> bool:
+        """Verifica se o evento deve ser despachado de forma assíncrona."""
+        return (
+            isinstance(event, Evento)
+            and event.executar_de_forma_assincrona
+            and self.despachador_assincrono is not None
+        )
 
-                load_dotenv()
+    def _tratar_erro_evento(self, erro: Exception) -> None:
+        """Trata erro ocorrido durante processamento de evento."""
+        if self.subir_erros_de_eventos or self._ambiente_teste:
+            raise erro
 
-                if (
-                    self.subir_erros_de_eventos
-                    or os.getenv("TEST_ENV", "false") == "true"
-                ):
-                    # We must raise erros in event handling if is running tests
-                    raise erro
-
-                if os.getenv("ENV_CONFIG", "development") in ["alpha", "production"]:
-                    sentry_sdk.capture_exception(erro)
-
-                continue
+        if self._ambiente_producao and self.reportador_de_erros:
+            self.reportador_de_erros.capturar_excecao(erro)
 
     async def handle_async_event(self, event: Evento) -> None:
-        # from infra.aplicacoes.celery.tarefas import (
-        #     task_tratar_evento_asyncrono,
-        # )
+        """Despacha evento para processamento assíncrono."""
+        if self.despachador_assincrono is None:
+            logger.warning(
+                f"Evento {event} marcado como assíncrono mas sem despachador configurado"
+            )
+            return
 
-        # tarefa = task_tratar_evento_asyncrono.si(
-        #     evento=event,
-        #     usuario=self.uow.usuario,
-        # )
-        #
-        # if event.tempo_de_atraso_para_execucao_assincrona:
-        #     tarefa = tarefa.set(countdown=event.tempo_de_atraso_para_execucao_assincrona)
-        #
-        # if event.fila_de_execucao_assincrona:
-        #     tarefa = tarefa.set(queue=event.fila_de_execucao_assincrona)
-        #
-        #     if event.prioridade_de_execucao_assincrona:
-        #         tarefa = tarefa.set(priority=event.prioridade_de_execucao_assincrona)
-        #
-        # tarefa.apply_async()
-        ...
+        self.despachador_assincrono.despachar(
+            evento=event,
+            usuario=self.uow.usuario,
+        )
 
     async def handle_command(self, command: Comando) -> Any | None:
         logger.debug(f"handling command {command}")

@@ -1,0 +1,20 @@
+FROM python:3.11.9-slim
+
+WORKDIR /sistema_base_backend_v2
+
+RUN apt-get update && apt-get install -y curl build-essential
+
+COPY pyproject.toml uv.lock ./
+COPY infra/secrets.json infra/secrets.json
+
+RUN pip install --upgrade pip
+RUN pip install uv
+RUN uv sync && uv venv
+
+ENV PATH="/sistema_base_backend_v2/.venv/bin:$PATH"
+ENV PYTHONPATH=/sistema_base_backend_v2
+ENV TEST_ENV=true
+
+COPY . .
+
+CMD ["pytest", "tests/", "-v", "--tb=short"]

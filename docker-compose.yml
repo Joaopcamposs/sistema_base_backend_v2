@@ -12,18 +12,18 @@ services:
       - IN_DOCKER=true
       - DB_HOST=postgres
 
-#  celery_worker:
-#    build:
-#      context: .
-#    container_name: celery_worker
-#    command: celery -A infra.aplicacoes.celery worker --loglevel=info
-#    depends_on:
-#      - redis
-#      - api
-#    environment:
-#      - C_FORCE_ROOT=true
-#      - IN_DOCKER=true
-#      - PYTHONPATH=/sistema_base_backend_v2
+  celery_worker:
+    build:
+      context: .
+    container_name: celery_worker
+    command: celery -A infra.aplicacoes.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - api
+    environment:
+      - C_FORCE_ROOT=true
+      - IN_DOCKER=true
+      - PYTHONPATH=/sistema_base_backend_v2
 
   redis:
     image: redis:7

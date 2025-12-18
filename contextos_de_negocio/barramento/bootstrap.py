@@ -24,7 +24,6 @@ def bootstrap(
     usuario: Usuario | None = None,
     schema: str | None = None,
     subir_erros_de_eventos: bool = False,
-    permitir_execucoes_assincronas: bool = True,
     somente_leitura: bool = False,
     criar_schema: bool = False,
 ) -> BarramentoDeMensagens:
@@ -57,7 +56,6 @@ def bootstrap(
         usuario=usuario,
         schema=schema,
         subir_erros_de_eventos=subir_erros_de_eventos,
-        permitir_execucoes_assincronas=permitir_execucoes_assincronas,
         somente_leitura=somente_leitura,
         criar_schema=criar_schema,
     )

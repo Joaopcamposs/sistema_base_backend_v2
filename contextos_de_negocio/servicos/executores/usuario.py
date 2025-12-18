@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from contextos_de_negocio.barramento.unidade_de_trabalho import UnidadeDeTrabalho
 from contextos_de_negocio.dominio.agregados.usuario import UsuarioPublico
 from contextos_de_negocio.dominio.comandos.usuario import (
     CadastrarUsuario,
@@ -38,7 +39,7 @@ async def cadastrar_usuario(
             permissoes=comando_ou_evento.permissoes,
         )
         novo_usuario.cadastrar(
-            usuario=uow.usuario,
+            id_usuario=uow.usuario.id,
         )
 
         await repo_dominio.adicionar(
@@ -72,7 +73,7 @@ async def atualizar_usuario(
             adm=comando.adm,
             ativo=comando.ativo,
             permissoes=comando.permissoes,
-            usuario=uow.usuario,
+            id_usuario=uow.usuario.id,
         )
 
         await repo_dominio.adicionar(
@@ -98,7 +99,7 @@ async def remover_usuario(
             }
         )
         usuario = await repo_dominio.consultar_um_por_filtros(filtros=filtros)
-        usuario.remover(usuario=uow.usuario)
+        usuario.remover(id_usuario=uow.usuario.id)
 
         await repo_dominio.remover(
             usuario=usuario,
@@ -125,7 +126,7 @@ async def cadastrar_usuario_publico(
 
         usuario_publico = UsuarioPublico.retornar_agregado_para_cadastro(usuario=usuario)
         usuario_publico.cadastrar(
-            usuario=uow.usuario,
+            id_usuario=uow.usuario.id,
         )
 
         await repo_dominio.adicionar_usuario_publico(
@@ -156,8 +157,10 @@ async def atualizar_usuario_publico(
             id=evento.id
         )
         usuario_publico.atualizar(
-            usuario_privado=usuario_privado,
-            usuario=uow.usuario,
+            email=usuario_privado.email,
+            senha=usuario_privado.senha,
+            ativo=usuario_privado.ativo,
+            id_usuario=uow.usuario.id,
         )
 
         await repo_dominio.adicionar_usuario_publico(
@@ -179,7 +182,7 @@ async def remover_usuario_publico(
         usuario_publico = await repo_dominio.consultar_usuario_publico_por_id(
             id=evento.id
         )
-        usuario_publico.remover(usuario=uow.usuario)
+        usuario_publico.remover(id_usuario=uow.usuario.id)
 
         await repo_dominio.remover_usuario_publico(
             usuario=usuario_publico,

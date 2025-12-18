@@ -4,9 +4,11 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
+
+import bcrypt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from libs.utils.constantes import pwd_context, AES_KEY
+from libs.utils.constantes import AES_KEY
 
 
 @dataclass(kw_only=True)
@@ -24,12 +26,14 @@ class SegurancaDoUsuario:
     _senha: str
 
     def verificar_senha(self, senha: str) -> bool:
-        senhas_conferem = pwd_context.verify(secret=senha, hash=self._senha)
+        senhas_conferem = bcrypt.checkpw(senha.encode()[:72], self._senha.encode())
         return senhas_conferem
 
     @staticmethod
     def criptografar_senha(senha: str) -> str:
-        senha_criptografada = pwd_context.hash(secret=senha)
+        senha_criptografada = bcrypt.hashpw(
+            senha.encode()[:72], bcrypt.gensalt()
+        ).decode()
         return senha_criptografada
 
     @staticmethod

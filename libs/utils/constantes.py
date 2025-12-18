@@ -24,7 +24,7 @@ def get_config_value(key: str, default=None):
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-with open(BASE_DIR / "secrets.json") as f:
+with open(BASE_DIR / "infra" / "secrets.json") as f:
     config = json.load(f)
 
 DB_HOST = get_config_value("DB_HOST", "localhost")

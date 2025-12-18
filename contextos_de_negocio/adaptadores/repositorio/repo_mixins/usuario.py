@@ -21,7 +21,7 @@ class UsuarioPublicoMixin(ABC):
             "ativo": usuario.ativo,
             "email_criptografado": usuario.email_criptografado,
             "email_hash": usuario.email_hash,
-            "senha_hash": usuario.senha_hash,
+            "senha_hash": usuario._senha,
             "criado_por": usuario.criado_por,
             "criado_em": usuario.criado_em,
             "modificado_por": usuario.modificado_por,

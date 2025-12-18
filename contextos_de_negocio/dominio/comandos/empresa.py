@@ -19,8 +19,8 @@ class CadastrarEmpresa(Comando):
     email: Email
     senha: str
     id: UUID
-    cnpj: CNPJ | None = None
-    nome_fantasia: str | None = None
+    cnpj: CNPJ | str
+    nome_fantasia: str
     deve_criar_usuario: bool = True
     _eh_primeira_empresa: bool = False
 
@@ -32,8 +32,8 @@ class AtualizarEmpresa(Comando):
     ativo: bool
     razao_social: str
     cpf: CPF
-    nome_fantasia: str | None = None
-    cnpj: CNPJ | None = None
+    nome_fantasia: str
+    cnpj: CNPJ | str
     # campos de busca
     id: UUID | None = None
     email_antigo: str | None = None

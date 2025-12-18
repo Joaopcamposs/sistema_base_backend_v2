@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from contextos_de_negocio.barramento.bootstrap import bootstrap
 from contextos_de_negocio.dominio.comandos.empresa import CadastrarEmpresa
 from contextos_de_negocio.dominio.entidades.usuario import Usuario
 from infra.banco_de_dados import (
@@ -19,7 +20,7 @@ def gerar_usuario_fake_primeiro_cadastro(id_empresa: UUID) -> Usuario:
         nome="Usuario Fake",
         email=EMAIL_PRIMEIRO_USUARIO,
         cpf=CPF_PRIMEIRO_USUARIO,
-        _senha_hash=SENHA_PRIMEIRO_USUARIO,
+        _senha=SENHA_PRIMEIRO_USUARIO,
         ativo=True,
         adm=True,
         permissoes=[],
@@ -54,6 +55,8 @@ async def criar_primeira_empresa_e_usuario() -> None:
                 senha=SENHA_PRIMEIRO_USUARIO,
                 cpf=CPF_PRIMEIRO_USUARIO,
                 ativo=True,
+                cnpj="",
+                nome_fantasia="JP ADM",
                 deve_criar_usuario=True,
                 _eh_primeira_empresa=True,
             )

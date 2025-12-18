@@ -3,6 +3,7 @@ from http import HTTPStatus
 from fastapi import APIRouter
 from starlette.responses import JSONResponse
 
+from contextos_de_negocio.barramento.bootstrap import bootstrap
 from contextos_de_negocio.dominio.comandos.teste import ComandoTeste
 
 router_teste = APIRouter(prefix="/api/v1", tags=["Teste"])

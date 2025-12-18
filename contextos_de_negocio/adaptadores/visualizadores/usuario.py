@@ -1,5 +1,6 @@
 from pydantic import UUID4
 
+from contextos_de_negocio.barramento.unidade_de_trabalho import UnidadeDeTrabalho
 from contextos_de_negocio.dominio.entidades.usuario import Usuario
 from libs.ddd.visualizadores.filtro import Filtros
 from libs.utils.tipos_basicos import Email

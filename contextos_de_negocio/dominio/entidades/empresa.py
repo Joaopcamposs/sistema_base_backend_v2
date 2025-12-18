@@ -15,5 +15,5 @@ class Empresa(CamposBase):
     nome_responsavel: str
     email: Email
     cpf: CPF
-    cnpj: CNPJ
+    cnpj: CNPJ | str
     ativo: bool

@@ -6,6 +6,8 @@ from pydantic import UUID4
 from starlette.responses import JSONResponse
 
 from contextos_de_negocio.adaptadores.visualizadores.empresa import listar_empresas_por_id
+from contextos_de_negocio.barramento.bootstrap import bootstrap
+from contextos_de_negocio.barramento.unidade_de_trabalho import UnidadeDeTrabalho
 from contextos_de_negocio.dominio.comandos.empresa import (
     CadastrarEmpresa,
     AtualizarEmpresa,

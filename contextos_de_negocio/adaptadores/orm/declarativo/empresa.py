@@ -18,7 +18,7 @@ class EmpresaDB(Base, CamposBaseDB):
     id: Mapped[UUID] = mapped_column(UUID, primary_key=True, unique=True, default=uuid4)
     razao_social: Mapped[str] = mapped_column(String(255), nullable=False)
     nome_fantasia: Mapped[str | None] = mapped_column(
-        String(255), nullable=True, default=None
+        String(255), nullable=False, default=""
     )
     nome_responsavel: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(
@@ -28,7 +28,7 @@ class EmpresaDB(Base, CamposBaseDB):
     )
     cpf: Mapped[str] = mapped_column(String(11), nullable=False, unique=False)
     cnpj: Mapped[str | None] = mapped_column(
-        String(14), nullable=True, unique=False, default=None
+        String(14), nullable=False, unique=False, default=""
     )
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 

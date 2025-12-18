@@ -7,6 +7,8 @@ from starlette.responses import JSONResponse
 from contextos_de_negocio.adaptadores.visualizadores.usuario import (
     listar_usuarios_por_id_e_email,
 )
+from contextos_de_negocio.barramento.bootstrap import bootstrap
+from contextos_de_negocio.barramento.unidade_de_trabalho import UnidadeDeTrabalho
 from contextos_de_negocio.dominio.comandos.usuario import (
     CadastrarUsuario,
     AtualizarUsuario,

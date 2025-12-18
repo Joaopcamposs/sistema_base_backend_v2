@@ -34,9 +34,9 @@ class CPF(str):
 
 class CNPJ(str):
     # apenas para formatar cnpj com digitos
-    def __new__(cls, value: str | None) -> CNPJ | None:  # type: ignore[misc]
+    def __new__(cls, value: str | None) -> CNPJ | str:  # type: ignore[misc]
         if not value:
-            return None
+            return ""
         if isinstance(value, str):
             value = cls.somente_digitos(value)
         return super().__new__(cls, value)

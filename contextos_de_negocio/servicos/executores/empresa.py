@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from contextos_de_negocio.barramento.unidade_de_trabalho import UnidadeDeTrabalho
 from contextos_de_negocio.dominio.comandos.empresa import (
     CadastrarEmpresa,
     AtualizarEmpresa,
@@ -32,7 +33,7 @@ async def cadastrar_empresa(
                 id=comando.id,
                 _eh_primeira_empresa=comando._eh_primeira_empresa,
             )
-            nova_empresa.cadastrar(usuario=uow.usuario, senha=comando.senha)
+            nova_empresa.cadastrar(id_usuario=uow.usuario.id, senha=comando.senha)
 
             await repo_dominio.adicionar(
                 empresa=nova_empresa,
@@ -69,7 +70,7 @@ async def atualizar_empresa(
             cpf=comando.cpf,
             cnpj=comando.cnpj,
             ativo=comando.ativo,
-            usuario=uow.usuario,
+            id_usuario=uow.usuario.id,
         )
 
         await repo_dominio.adicionar(
@@ -95,7 +96,7 @@ async def remover_empresa(
             }
         )
         empresa = await repo_dominio.consultar_um_por_filtros(filtros=filtros)
-        empresa.remover(usuario=uow.usuario)
+        empresa.remover(id_usuario=uow.usuario.id)
 
         await repo_dominio.remover(
             empresa=empresa,

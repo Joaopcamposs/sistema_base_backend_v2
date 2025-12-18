@@ -25,8 +25,8 @@ class Empresa(Agregado):
     email: Email
     ativo: bool
     cpf: CPF
-    nome_fantasia: str | None = None
-    cnpj: CNPJ | None = None
+    nome_fantasia: str
+    cnpj: CNPJ | str
 
     _eh_primeira_empresa: bool = False
 
@@ -40,11 +40,11 @@ class Empresa(Agregado):
     def retornar_agregado_para_cadastro(
         cls,
         razao_social: str,
-        nome_fantasia: str | None,
+        nome_fantasia: str,
         nome_responsavel: str,
         email: Email,
         cpf: CPF,
-        cnpj: CNPJ | None,
+        cnpj: CNPJ | str,
         ativo: bool,
         id: UUID | None = None,
         _eh_primeira_empresa: bool = False,
